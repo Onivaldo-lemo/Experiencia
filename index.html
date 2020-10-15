@@ -1,21 +1,92 @@
-<! DOCTYPE html >
-< html >
-< cabeça >
-        < meta  charset = " UTF-8 " />
-        < title > Formulário elaborado </ title >
-</ head >
-< corpo >
-     < H1 > Xadastro </ h1 > < br >
-     < form  action = " Formulário.php " method = " GET " >
-        < P > Nome: < br />
-        < input  type = " text " maxlength = " 40 " name = " nome " obrigatório > </ p >
-        < P > Cidade: < br />
-        < input  type = " text " maxlength = " 25 " name = " cidade " obrigatório > </ p >
-        < P > Dados Nascimento: < br />
-        < input  type = " date " name = " nascimento " obrigatório > </ p >
-        < P > E-mail: < br />
-        < input  type = " email " name = " em " maxlength = " 30 " > </ p >
-        < p > < input  type = " submit " value = " Enviar " >
-      </ form >
-</ body >
-</ html
+<!DOCTYPE HTML>
+<html>  
+	<head>
+		<meta charset="UTF-8">
+		<link rel="stylesheet" href="css.css">
+		<title>Tabela com dados do BD</title>
+	</head>
+	<body>
+	
+	<?php
+
+		function converteData($dt)
+		{
+			$data = date_create($dt);
+			return date_format($data,"d/m/Y"); 
+		}
+
+		//Cria a conexão com o Banco de Dados
+		$conexao = mysqli_connect("localhost", "root", "senha.BD00", "bd_guilherme");
+		header('Content-Type: text/html; charset=UTF-8');
+		mysqli_set_charset($conexao, 'UTF8');
+
+		//Realiza a consulta no BD
+		$sql = "SELECT * FROM Pessoas order by ID";
+		$resultado = mysqli_query($conexao, $sql);
+		
+		if($resultado == true)
+		{
+			//Obtém o número de colunas do resultado
+			$num_colunas = mysqli_num_fields($resultado);
+
+			//Pega informações das colunas
+			$colunas = mysqli_fetch_fields($resultado);
+			
+			//Inicializa a variável que armazena a posição da coluna do tipo "Date"
+			$indiceData = -1; 
+			
+			//Montando o cabeçalho da tabela
+			$tabela = "<table><caption>Pessoas Cadastradas</caption><tr>";
+			
+			//Percorre cada uma das colunas
+			for($i = 0; $i < $num_colunas; $i++)
+			{
+				//Armazena o nome da coluna atual
+				$nomeColuna = $colunas[$i]->name; 
+				
+				//Converte o primeiro caracter do nome da coluna para MAIÚSCULO
+				$nomeColuna = ucfirst(strtolower($nomeColuna));
+
+				$tabela .= "<th>".$nomeColuna."</th>";
+				
+				//Verifica se a coluna é do tipo "Date" (Tipo = 10)
+				if($colunas[$i]->type == 10)
+				{
+					$indiceData = $i;	
+				}
+			}
+			$tabela .= "</tr>"; 
+			
+			//Montando o corpo da tabela
+			while($row = mysqli_fetch_array($resultado))
+			{
+				$tabela .= "<tr>";
+				for($i = 0; $i < $num_colunas; $i++)
+				{
+					$dado = $row[$i];
+					if($indiceData != $i)
+					{
+						$tabela .= "<td>".$dado."</td>";
+					}
+					else
+					{
+						$tabela .= "<td>".converteData($dado)."</td>";
+					}
+				}
+				$tabela .= "</tr>";
+			}
+			 
+			//Finalizando a tabela
+			$tabela .= "</table>";
+			 
+			//Imprimindo a tabela
+			echo $tabela;
+		}
+		
+		//Fecha a conexão com o BD
+		mysqli_free_result($resultado);
+		mysqli_close($conexao); 
+	?>
+
+	</body>
+</html>
